@@ -9,3 +9,7 @@ Clone this repo and run `flutter run`, if you want to run on specified devices u
 flutter devices
 flutter run -d <device_id>
 ```
+
+
+https://github.com/Khmhmm/flutter_lottery_erase/assets/59366025/92490c9a-1247-428f-86cc-5b14a5eb026b
+
