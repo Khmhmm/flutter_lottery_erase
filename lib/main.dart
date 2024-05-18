@@ -89,7 +89,7 @@ class _MyHomePageState extends State<MyHomePage> {
             _drawingController.startDraw(Offset(0, 0));
             _drawingController.endDraw();
           }
-          _drawingController.setPaintContent(Eraser());
+          _drawingController.setPaintContent(Eraser(color: Theme.of(context).colorScheme.background));
           _drawingController.setStyle(strokeWidth: 36);
 
           return Center(child: board!);
