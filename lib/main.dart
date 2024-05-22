@@ -43,14 +43,31 @@ class _MyHomePageState extends State<MyHomePage> {
   final DrawingController _drawingController = DrawingController();
   Widget? board;
 
-  Future<void> checkIfErased(PointerDownEvent _) async {
+  Future<bool> checkErased() async {
     ByteData? imgbts = await _drawingController.getImageData();
     final buf = imgbts!.buffer.asInt8List();
-
     int zeroBts = buf.where((bt) => bt == 0).length;
-    if (zeroBts / buf.length >= 0.7) {
+
+    return zeroBts / buf.length >= 0.15;
+  }
+
+  Future<void> updateIfErased() async {
+    if (await checkErased()) {
       setState(() => widget.erased = true);
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(
+      const Duration(seconds: 2),
+      () => Future.doWhile(() async {
+        await Future.delayed(const Duration(milliseconds: 600));
+        return !(await checkErased());
+      }).then((_) => updateIfErased().then((_){}))
+    ).then((_){});
   }
 
   @override
@@ -80,7 +97,8 @@ class _MyHomePageState extends State<MyHomePage> {
               panAxis: PanAxis.aligned,
               boardScaleEnabled: false,
               boardPanEnabled: false,
-              onPointerDown: checkIfErased,
+              // onPointerDown: updateIfErased,
+              // onPointerUp: updateIfErased,
             )
             );
             _drawingController.setPaintContent(
@@ -90,7 +108,7 @@ class _MyHomePageState extends State<MyHomePage> {
             _drawingController.endDraw();
           }
           _drawingController.setPaintContent(Eraser(color: Theme.of(context).colorScheme.background));
-          _drawingController.setStyle(strokeWidth: 36);
+          _drawingController.setStyle(strokeWidth: 48);
 
           return Center(child: board!);
         } else {
