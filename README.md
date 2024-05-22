@@ -10,6 +10,5 @@ flutter devices
 flutter run -d <device_id>
 ```
 
-
-https://github.com/Khmhmm/flutter_lottery_erase/assets/59366025/92490c9a-1247-428f-86cc-5b14a5eb026b
+https://github.com/Khmhmm/flutter_lottery_erase/assets/59366025/7eb94ceb-5b78-4ec3-b066-98cd35db4911
 
