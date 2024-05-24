@@ -5,6 +5,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'package:flutter_drawing_board/paint_contents.dart';
@@ -85,9 +87,9 @@ class _MyHomePageState extends State<MyHomePage> {
     double w = MediaQuery.of(context).size.width;
     double h = MediaQuery.of(context).size.height;
 
-    return FutureBuilder<ui.Image>(
-      future: getUiImage('assets/yumiko_017.png', (w * 0.66).round(), (h * 0.33).round()),
-      builder: (BuildContext context, AsyncSnapshot<ui.Image> snapshot) {
+    return FutureBuilder<ImageInfo>(
+      future: getUiImage(context, 'assets/termoland9.png', (w * 0.66).round(), (h * 0.36).round()),
+      builder: (BuildContext context, AsyncSnapshot<ImageInfo> snapshot) {
         if (snapshot.hasData) {
           if (board == null) {
             board = SizedBox(width: w*0.66, height: h*0.36, child:
@@ -104,20 +106,31 @@ class _MyHomePageState extends State<MyHomePage> {
             _drawingController.setPaintContent(
               ImgPainter(snapshot.data)
             );
+            _drawingController.setStyle(blendMode: ui.BlendMode.src, filterQuality: ui.FilterQuality.high, isAntiAlias: true);
             _drawingController.startDraw(Offset(0, 0));
             _drawingController.endDraw();
           }
           _drawingController.setPaintContent(Eraser(color: Theme.of(context).colorScheme.background));
           _drawingController.setStyle(strokeWidth: 48);
 
-          return Center(child: board!);
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Spacer(),
+              Center(child: Image.asset('assets/termoland9.png', width: w * 0.66, height: h * 0.36)),
+              Spacer(),
+              Center(child: board!),
+              Spacer(),
+            ],
+          );
         } else {
           return Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Spacer(),
-              Image.asset('assets/yumiko_017.png', width: w * 0.66, height: h * 0.36),
+              Image.asset('assets/termoland9.png', width: w * 0.66, height: h * 0.36),
               Spacer(),
             ],
           );
@@ -146,7 +159,8 @@ class ImgPainter extends PaintContent {
   }
 
   Offset startPoint = Offset.zero;
-  ui.Image? img;
+  // ui.Image? img;
+  ImageInfo? img;
 
   @override
   void startDraw(Offset startPoint) => this.startPoint = startPoint;
@@ -160,7 +174,21 @@ class ImgPainter extends PaintContent {
 
   @override
   void draw(Canvas canvas, Size size, bool deeper) {
-    canvas.drawImage(this.img!, startPoint, paint);
+    // final p = Paint();
+    // p.filterQuality = FilterQuality.high;
+    // p.isAntiAlias = true;
+    // canvas.drawImage(this.img!, startPoint, p);
+    paintImage(
+      canvas: canvas,
+      rect: Rect.fromLTWH(
+         0, 0,
+         this.img!.image.width / 1.333,
+         this.img!.image.height / 1.333),
+         // this.img!.image.width / this.img!.scale,
+         // this.img!.image.height / this.img!.scale),
+      image: this.img!.image,
+      filterQuality: FilterQuality.high,
+   );
   }
 
   @override
@@ -183,14 +211,46 @@ class ImgPainter extends PaintContent {
 
 
 // https://stackoverflow.com/questions/59923245/flutter-convert-and-resize-asset-image-to-dart-ui-image
-Future<ui.Image> getUiImage(String imageAssetPath, int width, int height) async {
-  final ByteData assetImageByteData = await rootBundle.load(imageAssetPath);
-  final codec = await ui.instantiateImageCodec(
-    assetImageByteData.buffer.asUint8List(),
-    targetHeight: height,
-    targetWidth: width,
-  );
+// https://stackoverflow.com/questions/65439889/flutter-canvas-drawimage-draws-a-pixelated-image
 
-  final image = (await codec.getNextFrame()).image;
-  return image;
+// Future<ui.Image> getUiImage(String imageAssetPath, int width, int height) async {
+Future<ImageInfo> getUiImage(BuildContext context, String imageAssetPath, int width, int height) async {
+  // final buf = await rootBundle.loadBuffer(imageAssetPath);
+  // final codec = await ui.instantiateImageCodecFromBuffer(
+  //   // assetImageByteData.buffer.asUint8List(),
+  //   buf,
+  //   targetHeight: height,
+  //   targetWidth: width,
+  // );
+  //
+  // final image = (await codec.getNextFrame()).image;
+
+  // final descriptor = ui.ImageDescriptor.raw(
+  //   buf,
+  //   width: width,
+  //   height: height,
+  //   pixelFormat: ui.PixelFormat.rgba8888,
+  // );
+  // final descriptor = await ui.ImageDescriptor.encoded(buf);
+  // final codec = await descriptor.instantiateCodec(targetWidth: width, targetHeight: height);
+  // final image = (await codec.getNextFrame()).image;
+
+
+  AssetImage assetImage = AssetImage(imageAssetPath);
+  ImageConfiguration cfg = createLocalImageConfiguration(context);
+  // ImageConfiguration cfg = ImageConfiguration(
+  //   bundle: rootBundle,
+  //   devicePixelRatio: MediaQuery.of(context).devicePixelRatio,
+  //   locale: null,
+  //   textDirection: null,
+  //   // size: MediaQuery.of(context).size,
+  //   size: Size(width * 1.0, height * 1.0),
+  //   platform: null,
+  // );
+  ImageStream stream = assetImage.resolve(cfg);
+  Completer<ImageInfo> completer = Completer();
+  stream.addListener(ImageStreamListener( (imageInfo, _) => completer.complete(imageInfo) ));
+  ImageInfo imginf = await completer.future;
+
+  return imginf;
 }
